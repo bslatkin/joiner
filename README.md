@@ -86,3 +86,7 @@ JoinMyData(dataArray).With("\n")
 ```
 
 The `Join*` prefixed type conversion will always be defined for your types. The `With` method indicates the separator string to use. The return type is a `string`.
+
+## About
+
+By [Brett Slatkin](http://www.onebigfluke.com)
