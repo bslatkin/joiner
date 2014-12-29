@@ -6,17 +6,17 @@ import (
 	_ "github.com/bslatkin/joiner"
 )
 
-// go:generate joiner
+//go:generate joiner
 type Person struct {
 	FirstName string
 	LastName  string
 	HairColor string
 }
 
-// go:generate joiner
+//go:generate joiner
 type MyType int
 
-// go:generate joiner
+//go:generate joiner
 type Place struct {
 	Name string
 	Lat  float32
