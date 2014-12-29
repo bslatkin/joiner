@@ -9,45 +9,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-var src = `
-package mycrazypackage
+func processFile(inputPath string) {
+	log.Printf("Processing file %s", inputPath)
 
-import (
-    "fmt"
-    "strings"
-
-    _ "github.com/bslatkin/joiner"
-)
-
-// go:generate joiner
-type Person struct {
-    FirstName string
-    LastName  string
-    HairColor string
-}
-
-// go:generate joiner
-type MyType int
-
-func (s Person) String() string {
-    return fmt.Sprintf("%#v", s)
-}
-
-func main() {
-    people := []Person{
-        Person{"Sideshow", "Bob", "red"},
-        Person{"Homer", "Simpson", "n/a"},
-        Person{"Lisa", "Simpson", "blonde"},
-        Person{"Marge", "Simpson", "blue"},
-        Person{"Mr", "Burns", "gray"},
-    }
-    fmt.Printf("My favorite Simpsons Characters:%s\n", JoinPerson(people).With("\n"))
-}
-`
-
-func main() {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "main.go", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +50,24 @@ func main() {
 
 	log.Printf("Found joiner types to generate: %#v", types)
 
-	if err := render(os.Stdout, packageName, types); err != nil {
+	outputPath, err := getRenderedPath(inputPath)
+	if err != nil {
+		log.Fatalf("Could not get output path: %s", err)
+	}
+
+	output, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		log.Fatalf("Could not open output file: %s", err)
+	}
+
+	if err := render(output, packageName, types); err != nil {
 		log.Fatalf("Could not generate go code: %s", err)
 	}
+}
+
+func main() {
+	log.SetFlags(0)
+	log.SetPrefix("joiner: ")
+
+	processFile("./example/main.go")
 }
