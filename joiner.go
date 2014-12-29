@@ -4,12 +4,13 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"os"
 
 	"github.com/davecgh/go-spew/spew"
 )
 
 var src = `
-package main
+package mycrazypackage
 
 import (
     "fmt"
@@ -50,12 +51,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Println(spew.Sdump(f.Decls))
+
+	packageName := identifyPackage(f)
+	if packageName == "" {
+		log.Fatal("Could not determine package name")
+	}
 
 	joiners := map[string]bool{}
 	stringers := map[string]bool{}
-
 	for _, decl := range f.Decls {
+		log.Printf("Considering %s", spew.Sdump(decl))
+
 		typeName, ok := identifyJoinerType(decl)
 		if ok {
 			joiners[typeName] = true
@@ -68,6 +74,17 @@ func main() {
 			continue
 		}
 	}
-	log.Printf("Joiners are %#v", joiners)
-	log.Printf("Stringers are %#v", stringers)
+
+	types := []GeneratedType{}
+	for typeName, _ := range joiners {
+		_, isStringer := stringers[typeName]
+		joiner := GeneratedType{typeName, isStringer}
+		types = append(types, joiner)
+	}
+
+	log.Printf("Found joiner types to generate: %#v", types)
+
+	if err := render(os.Stdout, packageName, types); err != nil {
+		log.Fatalf("Could not generate go code: %s", err)
+	}
 }

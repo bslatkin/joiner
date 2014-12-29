@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+func identifyPackage(f *ast.File) string {
+	if f.Name == nil {
+		return ""
+	}
+	return f.Name.Name
+}
+
 func identifyJoinerType(decl ast.Decl) (typeName string, match bool) {
 	genDecl, ok := decl.(*ast.GenDecl)
 	if !ok {
