@@ -69,5 +69,7 @@ func main() {
 	log.SetFlags(0)
 	log.SetPrefix("joiner: ")
 
-	processFile("./example/main.go")
+	for _, path := range os.Args[1:] {
+		processFile(path)
+	}
 }
