@@ -1,52 +1,14 @@
 package main
 
 import (
-	"go/parser"
-	"go/token"
 	"log"
 	"os"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func processFile(inputPath string) {
 	log.Printf("Processing file %s", inputPath)
 
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
-
-	packageName := identifyPackage(f)
-	if packageName == "" {
-		log.Fatal("Could not determine package name")
-	}
-
-	joiners := map[string]bool{}
-	stringers := map[string]bool{}
-	for _, decl := range f.Decls {
-		log.Printf("Considering %s", spew.Sdump(decl))
-
-		typeName, ok := identifyJoinerType(decl)
-		if ok {
-			joiners[typeName] = true
-			continue
-		}
-
-		typeName, ok = identifyStringer(decl)
-		if ok {
-			stringers[typeName] = true
-			continue
-		}
-	}
-
-	types := []GeneratedType{}
-	for typeName, _ := range joiners {
-		_, isStringer := stringers[typeName]
-		joiner := GeneratedType{typeName, isStringer}
-		types = append(types, joiner)
-	}
+	packageName, types := loadFile(inputPath)
 
 	log.Printf("Found joiner types to generate: %#v", types)
 

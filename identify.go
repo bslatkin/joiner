@@ -2,8 +2,49 @@ package main
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
+	"log"
 	"strings"
 )
+
+func loadFile(inputPath string) (string, []GeneratedType) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
+	if err != nil {
+		log.Fatalf("Could not parse file: %s", err)
+	}
+
+	packageName := identifyPackage(f)
+	if packageName == "" {
+		log.Fatalf("Could not determine package name of %s", inputPath)
+	}
+
+	joiners := map[string]bool{}
+	stringers := map[string]bool{}
+	for _, decl := range f.Decls {
+		typeName, ok := identifyJoinerType(decl)
+		if ok {
+			joiners[typeName] = true
+			continue
+		}
+
+		typeName, ok = identifyStringer(decl)
+		if ok {
+			stringers[typeName] = true
+			continue
+		}
+	}
+
+	types := []GeneratedType{}
+	for typeName, _ := range joiners {
+		_, isStringer := stringers[typeName]
+		joiner := GeneratedType{typeName, isStringer}
+		types = append(types, joiner)
+	}
+
+	return packageName, types
+}
 
 func identifyPackage(f *ast.File) string {
 	if f.Name == nil {
